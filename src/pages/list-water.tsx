@@ -1,37 +1,63 @@
-import {Device} from "../store/device";
-import {Badge} from "react-bootstrap";
+import {Badge, Button, Form, Spinner} from "react-bootstrap";
 import {TitlePage} from "../componetns/title-page";
 import {useNavigate} from "react-router-dom";
-import {useEffect} from "react";
+import {FaTrash, FaList as IconEdit} from "react-icons/fa";
 import {observer} from "mobx-react-lite";
+import {ActiveTask, ListActiveTask} from "../store/active-task";
+import {ErrorPage} from "../componetns/error-page";
 
 
-const ItemDevice = observer((props: { model: Device }) => {
-    const {id, title, active, disable, startTime, waitTime} = props.model;
+const ItemDevice = observer((props: { model: ActiveTask, onRemove: (id: string) => void }) => {
+    const {model} = props;
+    const {id, title, disable, startTime, waitTime,} = props.model.task;
     const navigate = useNavigate();
-    useEffect(() => {
-        props.model.fetchCron()
-            .catch(err=>{
-                console.log(err);
-            })
-    }, [props.model])
+
     return (
-        <div className={"item-water"} onClick={() => navigate(`${id}`)}>
-            <h5>{title} {active ? '[ON]' : ''}</h5>
-            {!disable && startTime.split(',').map((time:string, index: number) => <span key={index}><Badge bg="info">{time}</Badge> </span>)}
+        <div className={"item-water"}>
+            <div style={{textAlign: 'center', height: '2.2rem'}}>
+                <Button size="sm" variant="light" onClick={() => props.onRemove(id)} style={{float: 'left'}}><FaTrash/></Button>
+                <Button size="sm" variant="light" onClick={() => navigate(`${id}`)} style={{float: 'right'}}><IconEdit/></Button>
+            </div>
+
+            <h5>{title}</h5>
+            <Form noValidate validated={false} >
+                <Form.Group className="mb-3" controlId={`activeId-${id}`}>
+                    <Form.Check
+                        type="switch"
+                        label={"Вкл/Выкл"}
+                        checked={model.active}
+                        disabled={model.loading}
+                        feedback="нет связи с контролером"
+                        feedbackType="invalid"
+                        isInvalid={!!model.error}
+                        onChange={(e) => model.doActive(e.target.checked)}/>
+                </Form.Group>
+            </Form>
+            {!disable && startTime.map((time: string, index: number) => <span key={index}><Badge
+                bg="info">{time}</Badge> </span>)}
             {disable && <Badge bg="secondary">Не активен</Badge>}
             <br/>
             <small>Время полива <strong>{waitTime}</strong> мин</small>
+
         </div>
     )
 })
 
-export const ListWater = (props: { items: Device[] }) => {
+export const ListWater = observer((props: { type: string, listActiveTask: ListActiveTask }) => {
+
+    const navigate = useNavigate();
+
+    const onClick = () => navigate(`add`);
+    const onRemove = (id: string) => props.listActiveTask.remove(id);
 
     return (
         <div className="page-content">
             <TitlePage title={"Авто полив"}/>
-            {props.items.map(item => <ItemDevice key={item.id} model={item}/>)}
+
+            {props.listActiveTask.error && <ErrorPage error={props.listActiveTask.error}/>}
+
+            {props.listActiveTask.items.map(item => <ItemDevice key={item.id} model={item} onRemove={onRemove}/>)}
+            <Button onClick={onClick}>+</Button>
         </div>
     )
-}
+})
