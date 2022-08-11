@@ -1,7 +1,6 @@
-import {makeAutoObservable, toJS} from "mobx";
-import {clientMQTT} from './mqtt';
+import {makeAutoObservable} from "mobx";
+//import {clientMQTT} from './mqtt';
 // @ts-ignore
-import dateFormat from 'dateformat';
 import axios from "axios";
 import {ITask} from "./intarface";
 
@@ -9,10 +8,10 @@ export class Task {
     //Data
     id?: string;
     title = 'Новая задача'
-    topic = '???'
+    topic = ''
     type = 'NONE'
     disable: boolean = false;
-    startTime: string = dateFormat(new Date(), 'HH:MM')
+    startTime: string = ""
     waitTime: number = 30; // minutes
 
     // UI
@@ -79,12 +78,21 @@ export class Task {
         } as ITask;
     }
 
-    save(): Promise<ITask> {
+    save(type: string): Promise<ITask> {
         this.setError();
         const data = this.toJSON();
+        data.type = type;
         const req = data.id ? axios.put : axios.post;
         return req('/task', data)
             .then(res => res.data)
+            .catch(err => this.setError(err))
+            .finally(() => this.setLoading(false))
+    }
+
+    remove(id: string) {
+        this.setError();
+        return axios.delete(`/task/${id}`)
+            .then(() => id)
             .catch(err => this.setError(err))
             .finally(() => this.setLoading(false))
     }

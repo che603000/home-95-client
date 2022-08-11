@@ -3,6 +3,10 @@ import {ITask} from "./intarface";
 import {clientMQTT} from './mqtt';
 import axios from "axios";
 
+
+const DEVICES_TOPIC = ['/devices/wb-mr6c_159/controls/#', '/devices/wb-gpio/controls/#'];
+
+
 export class ActiveTask {
     private key?: any = null;
 
@@ -19,13 +23,6 @@ export class ActiveTask {
     }
 
     constructor(public task: ITask) {
-        clientMQTT.on('connect', () => {
-            //console.log("success");
-            clientMQTT.subscribe(task.topic, () => {
-            })
-
-            clientMQTT.on('message', (topic: string, data: Buffer) => this.onMessage(topic, data.toString()));
-        });
         makeObservable(this, {
             active: observable,
             loading: observable,
@@ -34,6 +31,11 @@ export class ActiveTask {
             setLoading: action,
             setError: action,
         })
+    }
+
+    clear() {
+        clientMQTT.unsubscribe(this.task.topic, () => {
+        });
     }
 
     setError(err?: Error) {
@@ -48,10 +50,7 @@ export class ActiveTask {
         this.loading = value;
     }
 
-    onMessage(topic: string, data: string) {
-        if (this.task.topic !== topic)
-            return;
-        console.log(topic, data);
+    onMessage(data: string) {
         clearTimeout(this.key);
         const value = data === '1';
         this.setActive(value);
@@ -67,7 +66,6 @@ export class ActiveTask {
         }, 3000);
         clientMQTT.publish(`${this.task.topic}/on`, value ? '1' : '0');
     }
-
 }
 
 export class ListActiveTask {
@@ -75,7 +73,17 @@ export class ListActiveTask {
     loading = false;
     error?: Error;
 
+    mqttReady: Promise<any>
+
     constructor() {
+        this.mqttReady = new Promise<undefined>((res, rej) => {
+            clientMQTT.on('connect', () => res(clientMQTT));
+            clientMQTT.on('error', (err: Error) => rej(err));
+        });
+
+        this.mqttReady
+            .then(client => client.on('message', (topic: string, data: Buffer) => this.onMessage(topic, data.toString())))
+
         makeObservable(this, {
             items: observable.ref,
             loading: observable,
@@ -83,10 +91,14 @@ export class ListActiveTask {
             setItems: action,
             setLoading: action,
             setError: action,
-            add: action
         })
-        this.fetch().catch(err => this.setError(err))
+    }
 
+    onMessage(topic: string, data: string) {
+        const item = this.items.find(item => item.task.topic === topic);
+        if (!item)
+            return;
+        item.onMessage(data);
     }
 
     setError(err?: Error) {
@@ -107,44 +119,14 @@ export class ListActiveTask {
         return this.items.find(item => item.id === id);
     }
 
-    add(data: ITask) {
-        this.items.push(new ActiveTask(data))
-    }
-
     fetch() {
-        this.setLoading(true)
+        this.setLoading(true);
+        this.items = [];
         return axios.get('/task')
             .then(res => res.data as ITask[])
             .then(items => this.setItems(items))
-            .finally(() => this.setLoading(false))
-    }
-
-    remove(id: string) {
-        this.setLoading(true)
-        axios.delete(`/task/${id}`)
-            .then(() => this.items = this.items.filter(item => item.id !== id))
-            .catch(err => this.setError(err))
-            .finally(() => this.setLoading(false))
-    }
-
-    create(data: ITask) {
-        this.setError();
-        return axios.post('/task', data)
-            .then(res => res.data)
-            .then(data => this.items.push(new ActiveTask(data)))
-            .catch(err => this.setError(err))
-            .finally(() => this.setLoading(false))
-    }
-
-    update(data: ITask) {
-        this.setError();
-        return axios.put('/task', data)
-            .then(res => res.data)
-            .then(data => {
-                const item = this.getById(data.id);
-                if (item)
-                    item.task = data;
-            })
+            .then(() => this.mqttReady)
+            .then(client => client.unsubscribe(DEVICES_TOPIC, () => client.subscribe(DEVICES_TOPIC, () => undefined)))
             .catch(err => this.setError(err))
             .finally(() => this.setLoading(false))
     }

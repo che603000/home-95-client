@@ -8,30 +8,43 @@ import {ErrorPage} from "../componetns/error-page";
 import {ButtonsPage} from "../componetns/buttons-page";
 
 import {Task} from "../store/task";
-import {ITask} from "../store/intarface";
 import {listActiveTask} from "../store";
 
-
-const ComponentWater = (props: { model: Task, type: string, onUpdate?: (data?: ITask) => void }) => {
-    const {model, onUpdate} = props;
+const ComponentWater = (props: { model: Task, type: string }) => {
+    const {model} = props;
 
     const navigate = useNavigate();
 
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
-        model.setType(props.type);
-        model.save()
-            .then(data => onUpdate && onUpdate(data))
+        model.save(props.type)
             .then(() => navigate(-1));
     }
     const onEsc = () => navigate(-1);
+
+    const onDelete = () => {
+        const {id} = model;
+        if (!id)
+            return;
+        model.remove(id)
+            .then(() => navigate(-1));
+    }
 
     return (
         <div className="page-content">
             <TitlePage title="Новая задача"/>
             <hr/>
             <Form onSubmit={onSubmit}>
-                <Form.Group className="mb-3" controlId="titleId">
+                <Form.Group controlId={`active-task-${model.id}`}>
+                    <Form.Check
+                        type="switch"
+                        label={<span>Активная задача</span>}
+                        checked={!model.disable}
+                        disabled={model.loading}
+                        onChange={(e) => model.setDisable(!e.target.checked)}
+                    />
+                    <br/>
+                </Form.Group>                <Form.Group className="mb-3" controlId="titleId">
                     <Form.Label>Название</Form.Label>
                     <Form.Control
                         type="text"
@@ -44,6 +57,7 @@ const ComponentWater = (props: { model: Task, type: string, onUpdate?: (data?: I
                     <Form.Label>Топик MQQT</Form.Label>
                     <Form.Control
                         type="text"
+                        list="list-devices-wb"
                         value={model.topic}
                         disabled={model.loading}
                         onChange={e => model.setTopic(e.target.value)}/>
@@ -54,35 +68,43 @@ const ComponentWater = (props: { model: Task, type: string, onUpdate?: (data?: I
                     <Form.Control
                         type="text"
                         value={model.startTime}
-                        disabled={model.loading}
+                        disabled={model.loading || model.disable}
+                        placeholder={"06:00,20:00"}
                         onChange={e => model.setStartTime(e.target.value)}/>
                     <Form.Text className="text-muted">
-                        <small>время через запятую. 06:00,20:30,...</small>
+                        <small>список времени включения через запятую. 06:00,20:30,...</small>
                     </Form.Text>
                 </Form.Group>
                 <Form.Group className="mb-3" controlId="waitTimeId">
                     <Form.Label>Выключить через
-                        <b> {model.waitTime / 60 | 0}:{model.waitTime % 60 | 0}</b> Ч:М</Form.Label>
+                        <b> {model.waitTime}</b> мин</Form.Label>
                     <Form.Range
-                        min={10}
+                        min={5}
                         max={180}
-                        step={10}
-                        disabled={model.loading}
+                        step={5}
+                        disabled={model.loading || model.disable}
                         value={model.waitTime}
                         onChange={e => model.setWaitTime(+e.target.value)}
                     />
                 </Form.Group>
-
+                <datalist id="list-devices-wb">
+                    <option value="/devices/wb-mr6c_159/controls/"/>
+                    <option value="/devices/wb-grio/controls/"/>
+                </datalist>
                 {model.error && <ErrorPage error={model.error}/>}
 
                 <hr/>
                 <ButtonsPage>
-                    <Button variant="primary" type="submit" disabled={model.loading}>
-                        Применить
+                    <Button variant="secondary" size={"sm"} type="button" onClick={onDelete} disabled={model.loading}>
+                        Удалить
                     </Button>
                     <span> </span>
-                    <Button variant="secondary" type="button" onClick={onEsc} disabled={model.loading}>
+                    <Button variant="secondary" size={"sm"} type="button" onClick={onEsc} disabled={model.loading}>
                         Отменить
+                    </Button>
+                    <span> </span>
+                    <Button variant="primary" size={"sm"} type="submit" disabled={model.loading}>
+                        Сохранить
                     </Button>
                 </ButtonsPage>
             </Form>
@@ -97,20 +119,11 @@ export const WrapUpdate = (props: { type: string }) => {
     const activeModel = listActiveTask.getById(id as string);
     const data = activeModel ? activeModel.task : undefined;
     const model = new Task(data);
-    const onUpdate = (data?: ITask) => {
-        if (activeModel && data)
-            activeModel.task = data;
-    }
-    return <Water model={model} type={props.type} onUpdate={onUpdate}/>
-
+    return <Water model={model} type={props.type}/>
 }
 
 export const WrapCreate = (props: { type: string }) => {
     const model = new Task();
-    const onUpdate = (data?: ITask) => {
-        if (listActiveTask && data)
-            listActiveTask.add(data);
-    }
-    return <Water model={model} type={props.type} onUpdate={onUpdate}/>
+    return <Water model={model} type={props.type}/>
 
 }

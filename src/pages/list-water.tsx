@@ -1,63 +1,98 @@
-import {Badge, Button, Form, Spinner} from "react-bootstrap";
+import {useEffect} from 'react';
+import {Badge, Button, Form, Table, Row, Col} from "react-bootstrap";
 import {TitlePage} from "../componetns/title-page";
 import {useNavigate} from "react-router-dom";
-import {FaTrash, FaList as IconEdit} from "react-icons/fa";
+import {FaList as IconEdit, FaPlus as IconAdd} from "react-icons/fa";
 import {observer} from "mobx-react-lite";
 import {ActiveTask, ListActiveTask} from "../store/active-task";
 import {ErrorPage} from "../componetns/error-page";
 
 
-const ItemDevice = observer((props: { model: ActiveTask, onRemove: (id: string) => void }) => {
+const ItemDev = observer((props: { model: ActiveTask }) => {
     const {model} = props;
     const {id, title, disable, startTime, waitTime,} = props.model.task;
     const navigate = useNavigate();
 
     return (
-        <div className={"item-water"}>
-            <div style={{textAlign: 'center', height: '2.2rem'}}>
-                <Button size="sm" variant="light" onClick={() => props.onRemove(id)} style={{float: 'left'}}><FaTrash/></Button>
-                <Button size="sm" variant="light" onClick={() => navigate(`${id}`)} style={{float: 'right'}}><IconEdit/></Button>
-            </div>
+        <tr>
+            {/*<td>*/}
+            {/*    <Button size="sm" variant="light" onClick={() => props.onRemove(id)}*/}
+            {/*            style={{float: 'left'}}><FaTrash/></Button>*/}
+            {/*</td>*/}
+            <td>
+                <Row>
+                    <Col>
+                        <Form noValidate validated={false}>
+                            <Form.Group className="mb-3" controlId={`activeId-${id}`}>
+                                <Form.Check
+                                    type="switch"
+                                    label={<h5>{title}</h5>}
+                                    checked={model.active}
+                                    disabled={model.loading}
+                                    feedback="нет связи с контролером"
+                                    feedbackType="invalid"
+                                    isInvalid={!!model.error}
+                                    onChange={(e) => model.doActive(e.target.checked)}/>
+                            </Form.Group>
+                        </Form>
 
-            <h5>{title}</h5>
-            <Form noValidate validated={false} >
-                <Form.Group className="mb-3" controlId={`activeId-${id}`}>
-                    <Form.Check
-                        type="switch"
-                        label={"Вкл/Выкл"}
-                        checked={model.active}
-                        disabled={model.loading}
-                        feedback="нет связи с контролером"
-                        feedbackType="invalid"
-                        isInvalid={!!model.error}
-                        onChange={(e) => model.doActive(e.target.checked)}/>
-                </Form.Group>
-            </Form>
-            {!disable && startTime.map((time: string, index: number) => <span key={index}><Badge
-                bg="info">{time}</Badge> </span>)}
-            {disable && <Badge bg="secondary">Не активен</Badge>}
-            <br/>
-            <small>Время полива <strong>{waitTime}</strong> мин</small>
-
-        </div>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        {!disable && startTime.map((time: string, index: number) => <span key={index}><Badge
+                            bg="info">{time}</Badge> </span>)}
+                        {disable && <Badge bg="secondary">Не активна</Badge>}
+                        {!disable && <small>Время полива <strong>{waitTime}</strong> мин</small>}
+                    </Col>
+                </Row>
+            </td>
+            <td>
+                <Button size="sm" variant="light" onClick={() => navigate(`${id}`)}
+                        style={{float: 'right'}}><IconEdit/></Button>
+            </td>
+        </tr>
     )
+
 })
 
-export const ListWater = observer((props: { type: string, listActiveTask: ListActiveTask }) => {
+export const ListWater = observer((props: { type: string, title:string, listActiveTask: ListActiveTask }) => {
+
+    useEffect(() => {
+        props.listActiveTask.fetch().catch(()=>undefined);
+    }, [props.listActiveTask]);
 
     const navigate = useNavigate();
 
     const onClick = () => navigate(`add`);
-    const onRemove = (id: string) => props.listActiveTask.remove(id);
 
     return (
         <div className="page-content">
-            <TitlePage title={"Авто полив"}/>
-
+            <TitlePage title={props.title}/>
             {props.listActiveTask.error && <ErrorPage error={props.listActiveTask.error}/>}
+            <hr/>
+            <Table>
+                <tbody>
+                {
+                    props.listActiveTask.items
+                    .filter(t => t.type === props.type)
+                    .map(item => <ItemDev key={item.id} model={item}/>)
+                }
+                <tr>
+                    <td style={{textAlign: 'right'}}>
+                        <sub>
+                            Новая задача
+                        </sub>
 
-            {props.listActiveTask.items.map(item => <ItemDevice key={item.id} model={item} onRemove={onRemove}/>)}
-            <Button onClick={onClick}>+</Button>
+                    </td>
+                    <td width="20">
+                        <Button size={"sm"} variant="light" onClick={onClick}
+                                style={{float: 'right'}}><IconAdd/></Button>
+                    </td>
+                </tr>
+                </tbody>
+            </Table>
+
         </div>
     )
 })
