@@ -4,24 +4,23 @@ import {
     Link
 } from "react-router-dom";
 
-import { Light} from '../store/light'
 import {observer} from "mobx-react-lite";
-
 export const Home = () => <div>HOME !!!</div>
 
-export const TopIndex = observer((props: { light: Light }) => {
+export const TopIndex = observer(() => {
+    const titleStyle={textDecoration: "none", display: "block"}
     return (
         <div>
-            <Link to="/home">
-                <Button variant="secondary" className="main-button">Home</Button>
+            <Link to="/temperature" style={titleStyle}>
+                <Button variant="danger" className="main-button">Температура</Button>
             </Link>
-            <Link to="/light">
-                <Button variant="secondary" className="main-button" style={{color: props.light.active ? "yellow" : ''}}>
+            <Link to="/lights" style={titleStyle}>
+                <Button variant="warning" className="main-button">
                     Подсветка дома
                 </Button>
             </Link>
-            <Link to="/waters">
-                <Button variant="secondary" className="main-button">Авто полив</Button>
+            <Link to="/waters" style={titleStyle}>
+                <Button variant="info" className="main-button">Авто полив</Button>
             </Link>
         </div>
     )

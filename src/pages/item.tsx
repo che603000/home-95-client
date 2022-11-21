@@ -10,7 +10,7 @@ import {ButtonsPage} from "../componetns/buttons-page";
 import {Task} from "../store/task";
 import {listActiveTask} from "../store";
 
-const ComponentWater = (props: { model: Task, type: string }) => {
+const ComponentItem = (props: { model: Task, type: string }) => {
     const {model} = props;
 
     const navigate = useNavigate();
@@ -44,7 +44,8 @@ const ComponentWater = (props: { model: Task, type: string }) => {
                         onChange={(e) => model.setDisable(!e.target.checked)}
                     />
                     <br/>
-                </Form.Group>                <Form.Group className="mb-3" controlId="titleId">
+                </Form.Group>
+                <Form.Group className="mb-3" controlId="titleId">
                     <Form.Label>Название</Form.Label>
                     <Form.Control
                         type="text"
@@ -89,7 +90,7 @@ const ComponentWater = (props: { model: Task, type: string }) => {
                 </Form.Group>
                 <datalist id="list-devices-wb">
                     <option value="/devices/wb-mr6c_159/controls/"/>
-                    <option value="/devices/wb-grio/controls/"/>
+                    <option value="/devices/wb-gpio/controls/"/>
                 </datalist>
                 {model.error && <ErrorPage error={model.error}/>}
 
@@ -112,18 +113,17 @@ const ComponentWater = (props: { model: Task, type: string }) => {
     )
 }
 
-export const Water = observer(ComponentWater);
+export const Item = observer(ComponentItem);
 
 export const WrapUpdate = (props: { type: string }) => {
     let {id} = useParams();
     const activeModel = listActiveTask.getById(id as string);
     const data = activeModel ? activeModel.task : undefined;
     const model = new Task(data);
-    return <Water model={model} type={props.type}/>
+    return <Item model={model} type={props.type}/>
 }
 
 export const WrapCreate = (props: { type: string }) => {
     const model = new Task();
-    return <Water model={model} type={props.type}/>
-
+    return <Item model={model} type={props.type}/>
 }

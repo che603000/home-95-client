@@ -43,7 +43,7 @@ const ItemDev = observer((props: { model: ActiveTask }) => {
                         {!disable && startTime.map((time: string, index: number) => <span key={index}><Badge
                             bg="info">{time}</Badge> </span>)}
                         {disable && <Badge bg="secondary">Не активна</Badge>}
-                        {!disable && <small>Время полива <strong>{waitTime}</strong> мин</small>}
+                        {!disable && <small>Время работы <strong>{waitTime}</strong> мин</small>}
                     </Col>
                 </Row>
             </td>
@@ -56,7 +56,7 @@ const ItemDev = observer((props: { model: ActiveTask }) => {
 
 })
 
-export const ListWater = observer((props: { type: string, title:string, listActiveTask: ListActiveTask }) => {
+export const ListItem = observer((props: { type: string, title:string, listActiveTask: ListActiveTask }) => {
 
     useEffect(() => {
         props.listActiveTask.fetch().catch(()=>undefined);

@@ -1,64 +1,59 @@
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
-import {Line} from 'react-chartjs-2';
-import faker from 'faker';
+import {Row, Col, Container} from 'react-bootstrap';
+import {TempChart} from '../componetns/chart-temp'
+import {SENSOR_TEMP_OUTDOOR, SENSOR_TEMP_HOT, SENSOR_TEMP_HOT_BACK, BOARD_TEMP, CPU_TEMP} from "../const";
+import {useEffect, useState} from "react";
+import {loadTemp, loadTemps, createDataset} from "../componetns/utils";
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-);
-
-export const options = {
-    responsive: true,
-    plugins: {
-        legend: {
-            position: 'top' as const,
-        },
-        title: {
-            display: true,
-            text: 'Chart.js Line Chart',
-        },
-    },
-};
-
-const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-
-export const data = {
-    labels,
-    datasets: [
-        {
-            label: 'Dataset 1',
-            data: labels.map(() => faker.datatype.number({min: -1000, max: 1000})),
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        },
-        {
-            label: 'Dataset 2',
-            data: labels.map(() => faker.datatype.number({min: -1000, max: 1000})),
-            borderColor: 'rgb(53, 162, 235)',
-            backgroundColor: 'rgba(53, 162, 235, 0.5)',
-        },
-    ],
-};
 
 export const Temp = () => {
-    return (
-        <div style={{ width: '40%', border:'1px solid gray', margin: "0.5rem"}}>
-            <Line options={options} data={data}/>
-        </div>
 
-)
+    const [tempItems, setTempItems] = useState<any>(undefined);
+    const [tempOutDoor, setTempOutDoor] = useState<any>(undefined);
+
+    useEffect(() => {
+        loadTemp(SENSOR_TEMP_OUTDOOR, 3)
+            .then(items => setTempOutDoor(items));
+
+        loadTemps(1)
+            .then(items => setTempItems(items));
+    }, [])
+
+    if (tempItems && tempOutDoor) {
+
+        const outDoorTemp = tempItems[SENSOR_TEMP_OUTDOOR];
+        const tempCPU = tempItems[CPU_TEMP];
+
+        return (
+            <Container fluid={true}>
+                <Row>
+                    <Col>
+                        <TempChart datasets={[
+                            createDataset(outDoorTemp, 'blue', `Темп возд: ${outDoorTemp[outDoorTemp.length - 1].y} ℃`, 'yAxesTempOutDoor'),
+                            createDataset(tempItems[SENSOR_TEMP_HOT], 'red', 'Подача котла', 'yAxesTempHot'),
+                            createDataset(tempItems[SENSOR_TEMP_HOT_BACK], '#F99', 'Обратка котла', 'yAxesTempHot'),
+                        ]}/>
+                    </Col>
+                    <Col>
+                        <TempChart datasets={[
+                            createDataset(tempItems[BOARD_TEMP], '#F90', 'Темп в шкафу автоматике', 'yAxesTempHot'),
+                            createDataset(tempCPU, '#F09', 'Темп процессора', 'yAxesTempHot'),
+                        ]}/>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <TempChart datasets={[
+                            createDataset(tempOutDoor, 'blue', `Темп возд: ${tempOutDoor[tempOutDoor.length - 1].y} ℃`, 'yAxesTempOutDoorDays'),
+                        ]}/>
+                    </Col>
+
+                </Row>
+            </Container>
+            // <div style={{width: '40%', border: '1px solid gray', margin: "0.5rem"}}>
+            // <Line options={options} data={data}/>
+            // </div>
+
+        )
+    } else
+        return null;
 }

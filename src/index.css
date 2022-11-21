@@ -12,14 +12,12 @@ html, body {
 }
 
 .main-button {
-    height: 4rem;
+    height: 6rem;
     margin-top: 1rem;
     margin-left: auto;
     margin-right: auto;
     display: block;
     width: 95%;
-    text-underline: none;
-    text-decoration: none;
 }
 
 .page-content {
@@ -47,3 +45,15 @@ html, body {
     font-size: 1rem;
 }
 
+.temp-chart{
+    /*width: 600px;*/
+    /*height: 300px;*/
+    border: 1px solid gray;
+    margin: 0.5rem;
+}
+
+
+.temp-chart-wait {
+    text-align: center;
+    padding-top: 5rem;
+}
