@@ -28,7 +28,7 @@ export const Temp = () => {
                 <Row>
                     <Col>
                         <TempChart datasets={[
-                            createDataset(outDoorTemp, 'blue', `Темп возд: ${outDoorTemp[outDoorTemp.length - 1].y} ℃`, 'yAxesTempOutDoor'),
+                            createDataset(outDoorTemp, 'blue', `Темп возд: ${outDoorTemp[outDoorTemp.length - 1].y.toFixed(1)} ℃`, 'yAxesTempOutDoor'),
                             createDataset(tempItems[SENSOR_TEMP_HOT], 'red', 'Подача котла', 'yAxesTempHot'),
                             createDataset(tempItems[SENSOR_TEMP_HOT_BACK], '#F99', 'Обратка котла', 'yAxesTempHot'),
                         ]}/>
@@ -43,7 +43,7 @@ export const Temp = () => {
                 <Row>
                     <Col>
                         <TempChart datasets={[
-                            createDataset(tempOutDoor, 'blue', `Темп возд: ${tempOutDoor[tempOutDoor.length - 1].y} ℃`, 'yAxesTempOutDoorDays'),
+                            createDataset(tempOutDoor, 'blue', `Темп возд: ${tempOutDoor[tempOutDoor.length - 1].y.toFixed(1)} ℃`, 'yAxesTempOutDoorDays'),
                         ]}/>
                     </Col>
 
