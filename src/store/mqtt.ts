@@ -1,13 +1,9 @@
-import {devices} from '../config';
-
 // @ts-ignore
-const {connect} = window.mqtt;
+import {connect} from 'mqtt/dist/mqtt.min.js';
 
 const MQQT = {
     connect: 'ws://192.168.1.5:18883/mqtt'
 };
-
-
 
 export const clientMQTT = connect(MQQT.connect);
 
